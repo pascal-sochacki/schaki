@@ -21,6 +21,9 @@ type ChessBoard struct {
 	blackKing    uint64
 }
 
+type Move struct {
+}
+
 func NewChessBoard() *ChessBoard {
 	return &ChessBoard{
 		whitePawns:   0b0000000000000000000000000000000000000000000000001111111100000000,
@@ -39,7 +42,58 @@ func NewChessBoard() *ChessBoard {
 	}
 }
 
-func FromFenString(input string) {
+func FromFenString(input string) *ChessBoard {
+
+	for i := 2; i < 9; i++ {
+		input = strings.ReplaceAll(input, strconv.Itoa(i), strings.Repeat("1", i))
+	}
+	result := ChessBoard{}
+
+	var currentPoint uint64
+	currentPoint = 1 << 63
+	for i := 0; i < len(input); i++ {
+
+		current := rune(input[i])
+
+		if current == '/' {
+			continue
+		}
+
+		switch {
+		case current == '1':
+
+		case current == 'P':
+			result.whitePawns |= currentPoint
+		case current == 'R':
+			result.whiteRooks |= currentPoint
+		case current == 'N':
+			result.whiteKnights |= currentPoint
+		case current == 'B':
+			result.whiteBishop |= currentPoint
+		case current == 'Q':
+			result.whiteQueen |= currentPoint
+		case current == 'K':
+			result.whiteKing |= currentPoint
+
+		case current == 'p':
+			result.blackPawns |= currentPoint
+		case current == 'r':
+			result.blackRooks |= currentPoint
+		case current == 'n':
+			result.blackKnights |= currentPoint
+		case current == 'b':
+			result.blackBishop |= currentPoint
+		case current == 'q':
+			result.blackQueen |= currentPoint
+		case current == 'k':
+			result.blackKing |= currentPoint
+		}
+
+		currentPoint = currentPoint >> 1
+
+	}
+
+	return &result
 }
 
 func (receiver *ChessBoard) white() uint64 {
@@ -67,7 +121,7 @@ func (receiver *ChessBoard) String() string {
 		empty := 0
 		for x := 0; x < 8; x++ {
 
-			if current&all > 0 && empty > 1 {
+			if current&all > 0 && empty > 0 {
 				builder.WriteString(strconv.Itoa(empty))
 			}
 
@@ -119,4 +173,9 @@ func (receiver *ChessBoard) String() string {
 	}
 
 	return builder.String()
+}
+
+func (receiver *ChessBoard) GetMoves() []Move {
+	return []Move{}
+
 }
