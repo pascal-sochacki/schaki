@@ -1,9 +1,38 @@
 package chess
 
 import (
+	"fmt"
+	"math/bits"
 	"strconv"
 	"strings"
 )
+
+const (
+	WHITE_PAWN_START_POSITION uint64 = 0b0000000000000000000000000000000000000000000000001111111100000000
+	BLACK_PAWN_START_POSITION uint64 = 0b0000000011111111000000000000000000000000000000000000000000000000
+	MAX_POSITION              uint64 = 0b1000000000000000000000000000000000000000000000000000000000000000
+	MIN_POSITION              uint64 = 0b0000000000000000000000000000000000000000000000000000000000000001
+)
+
+type BitMap uint64
+
+func (receiver *BitMap) String() string {
+	builder := strings.Builder{}
+	point := MIN_POSITION
+	for i := 0; i < 8; i++ {
+		for j := 0; j < 8; j++ {
+			if point&uint64(*receiver) > 0 {
+				builder.WriteString("X")
+			} else {
+				builder.WriteString(".")
+			}
+			point = point << 1
+
+		}
+		builder.WriteString("\n")
+	}
+	return builder.String()
+}
 
 type ChessBoard struct {
 	whitePawns   uint64
@@ -21,19 +50,68 @@ type ChessBoard struct {
 	blackKing    uint64
 }
 
+var knightJumps [64]BitMap
+
+// 2  1  0  1  2
+// 6  7  8  9 10
+//14 15 16 17 18
+
+func init() {
+	var i BitMap
+	i = 1
+	position := 0
+
+
+    var seventeen BitMap 
+    seventeen = 0b1111111011111110111111101111111011111110111111101111111011111110
+
+    var ten BitMap 
+    ten = 0b1111110011111100111111001111110011111100111111001111110011111100
+
+    var fiveteen BitMap 
+    fiveteen = 0b0111111101111111011111110111111101111111011111110111111101111111
+
+    var six BitMap 
+    six = 0b0011111100111111001111110011111100111111001111110011111100111111
+
+
+	for {
+		var jumps BitMap
+
+		jumps |= ((i << 17) & seventeen) 
+		jumps |= (i << 10 & ten)
+		jumps |= ((i << 15) & fiveteen)
+		jumps |= ((i << 6) & six)
+
+		jumps |= ((i >> 6) & ten)
+        jumps |= ((i >> 10) & six)
+        jumps |= ((i >> 15) & seventeen)
+        jumps |= ((i >> 17) & fiveteen)
+
+		fmt.Printf("%v\n", jumps.String())
+		if i == BitMap(MAX_POSITION) {
+			break
+		}
+		knightJumps[position] = i
+		i = i << 1
+		position += 1
+	}
+
+}
+
 type Move struct {
 }
 
 func NewChessBoard() *ChessBoard {
 	return &ChessBoard{
-		whitePawns:   0b0000000000000000000000000000000000000000000000001111111100000000,
+		whitePawns:   WHITE_PAWN_START_POSITION,
 		whiteRooks:   0b0000000000000000000000000000000000000000000000000000000010000001,
 		whiteKnights: 0b0000000000000000000000000000000000000000000000000000000001000010,
 		whiteBishop:  0b0000000000000000000000000000000000000000000000000000000000100100,
 		whiteQueen:   0b0000000000000000000000000000000000000000000000000000000000010000,
 		whiteKing:    0b0000000000000000000000000000000000000000000000000000000000001000,
 
-		blackPawns:   0b0000000011111111000000000000000000000000000000000000000000000000,
+		blackPawns:   BLACK_PAWN_START_POSITION,
 		blackRooks:   0b1000000100000000000000000000000000000000000000000000000000000000,
 		blackKnights: 0b0100001000000000000000000000000000000000000000000000000000000000,
 		blackBishop:  0b0010010000000000000000000000000000000000000000000000000000000000,
@@ -176,6 +254,22 @@ func (receiver *ChessBoard) String() string {
 }
 
 func (receiver *ChessBoard) GetMoves() []Move {
-	return []Move{}
+
+	result := []Move{}
+
+	pawn_at_starting_pos := receiver.whitePawns & WHITE_PAWN_START_POSITION
+	if pawn_at_starting_pos > 0 {
+		amount := bits.OnesCount64(pawn_at_starting_pos)
+		for i := 0; i < amount; i++ {
+			result = append(result, Move{})
+		}
+	}
+
+	amount := bits.OnesCount64(receiver.whitePawns)
+	for i := 0; i < amount; i++ {
+		result = append(result, Move{})
+	}
+
+	return result
 
 }
