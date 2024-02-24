@@ -55,6 +55,10 @@ func TestChessMoves(t *testing.T) {
 			amount: 20,
 			input:  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
 		},
+		{
+			amount: 1,
+			input:  "8/8/8/4P3/8/8/8/8",
+		},
 	}
 
 	for _, test := range tests {
