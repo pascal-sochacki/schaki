@@ -60,32 +60,30 @@ func init() {
 	i = 1
 	position := 0
 
+	var seventeen BitMap
+	seventeen = 0b1111111011111110111111101111111011111110111111101111111011111110
 
-    var seventeen BitMap 
-    seventeen = 0b1111111011111110111111101111111011111110111111101111111011111110
+	var ten BitMap
+	ten = 0b1111110011111100111111001111110011111100111111001111110011111100
 
-    var ten BitMap 
-    ten = 0b1111110011111100111111001111110011111100111111001111110011111100
+	var fiveteen BitMap
+	fiveteen = 0b0111111101111111011111110111111101111111011111110111111101111111
 
-    var fiveteen BitMap 
-    fiveteen = 0b0111111101111111011111110111111101111111011111110111111101111111
-
-    var six BitMap 
-    six = 0b0011111100111111001111110011111100111111001111110011111100111111
-
+	var six BitMap
+	six = 0b0011111100111111001111110011111100111111001111110011111100111111
 
 	for {
 		var jumps BitMap
 
-		jumps |= ((i << 17) & seventeen) 
+		jumps |= ((i << 17) & seventeen)
 		jumps |= (i << 10 & ten)
 		jumps |= ((i << 15) & fiveteen)
 		jumps |= ((i << 6) & six)
 
 		jumps |= ((i >> 6) & ten)
-        jumps |= ((i >> 10) & six)
-        jumps |= ((i >> 15) & seventeen)
-        jumps |= ((i >> 17) & fiveteen)
+		jumps |= ((i >> 10) & six)
+		jumps |= ((i >> 15) & seventeen)
+		jumps |= ((i >> 17) & fiveteen)
 
 		if i == BitMap(MAX_POSITION) {
 			break
@@ -94,7 +92,6 @@ func init() {
 		i = i << 1
 		position += 1
 	}
-
 
 }
 
@@ -253,7 +250,7 @@ func (receiver *ChessBoard) String() string {
 }
 
 func findLSBSetBit(num BitMap) uint8 {
-    var bitIndex uint8
+	var bitIndex uint8
 	bitIndex = 0
 	for num > 0 {
 		if num&1 == 1 {
@@ -282,24 +279,32 @@ func (receiver ChessBoard) GetMoves() []Move {
 		result = append(result, Move{})
 	}
 
-    knights := receiver.whiteKnights
-    for {
-        var current uint8
-        current = findLSBSetBit(knights);
-       if current == 0 {
-            break
-        }
-        jumps := knightJumps[current] & ^receiver.white()
-        println(jumps.String())
-        amount := bits.OnesCount64(uint64(jumps))
-        for i := 0; i < amount; i++ {
-            result = append(result, Move{})
-        }
-        knights = knights ^ 1 << current
-    }
+    tdb(receiver.whiteKnights, func(u uint8) {
+		jumps := knightJumps[u] & ^receiver.white()
+		amount := bits.OnesCount64(uint64(jumps))
+		for i := 0; i < amount; i++ {
+			result = append(result, Move{})
+		}
+    })
 
+    tdb(receiver.whiteRooks, func(u uint8) {
+
+    })
 
 
 	return result
 
+}
+
+func tdb(pieces BitMap, do func(uint8) ) {
+
+    var current uint8
+    for {
+		current = findLSBSetBit(pieces)
+		if current == 0 {
+			break
+		}
+        do(current)
+		pieces = pieces ^ 1<<current
+    }
 }

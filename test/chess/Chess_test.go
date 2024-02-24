@@ -51,14 +51,10 @@ type moveTest struct {
 func TestChessMoves(t *testing.T) {
 
 	tests := []moveTest{
-		{
-			amount: 20,
-			input:  "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR",
-		},
-		{
-			amount: 1,
-			input:  "8/8/8/4P3/8/8/8/8",
-		},
+		{amount: 20, input: "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR"},
+		{amount: 1, input: "8/8/8/4P3/8/8/8/8"},
+		{amount: 8, input: "8/8/8/4N3/8/8/8/8"},
+		{amount: 14, input: "8/8/8/8/8/8/8/R7"},
 	}
 
 	for _, test := range tests {
