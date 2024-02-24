@@ -1,17 +1,16 @@
 package chess
 
 import (
-	"fmt"
 	"math/bits"
 	"strconv"
 	"strings"
 )
 
 const (
-	WHITE_PAWN_START_POSITION uint64 = 0b0000000000000000000000000000000000000000000000001111111100000000
-	BLACK_PAWN_START_POSITION uint64 = 0b0000000011111111000000000000000000000000000000000000000000000000
-	MAX_POSITION              uint64 = 0b1000000000000000000000000000000000000000000000000000000000000000
-	MIN_POSITION              uint64 = 0b0000000000000000000000000000000000000000000000000000000000000001
+	WHITE_PAWN_START_POSITION BitMap = 0b0000000000000000000000000000000000000000000000001111111100000000
+	BLACK_PAWN_START_POSITION BitMap = 0b0000000011111111000000000000000000000000000000000000000000000000
+	MAX_POSITION              BitMap = 0b1000000000000000000000000000000000000000000000000000000000000000
+	MIN_POSITION              BitMap = 0b0000000000000000000000000000000000000000000000000000000000000001
 )
 
 type BitMap uint64
@@ -21,7 +20,7 @@ func (receiver *BitMap) String() string {
 	point := MIN_POSITION
 	for i := 0; i < 8; i++ {
 		for j := 0; j < 8; j++ {
-			if point&uint64(*receiver) > 0 {
+			if point&*receiver > 0 {
 				builder.WriteString("X")
 			} else {
 				builder.WriteString(".")
@@ -35,19 +34,19 @@ func (receiver *BitMap) String() string {
 }
 
 type ChessBoard struct {
-	whitePawns   uint64
-	whiteRooks   uint64
-	whiteKnights uint64
-	whiteBishop  uint64
-	whiteQueen   uint64
-	whiteKing    uint64
+	whitePawns   BitMap
+	whiteRooks   BitMap
+	whiteKnights BitMap
+	whiteBishop  BitMap
+	whiteQueen   BitMap
+	whiteKing    BitMap
 
-	blackPawns   uint64
-	blackRooks   uint64
-	blackKnights uint64
-	blackBishop  uint64
-	blackQueen   uint64
-	blackKing    uint64
+	blackPawns   BitMap
+	blackRooks   BitMap
+	blackKnights BitMap
+	blackBishop  BitMap
+	blackQueen   BitMap
+	blackKing    BitMap
 }
 
 var knightJumps [64]BitMap
@@ -61,38 +60,35 @@ func init() {
 	i = 1
 	position := 0
 
+	var seventeen BitMap
+	seventeen = 0b1111111011111110111111101111111011111110111111101111111011111110
 
-    var seventeen BitMap 
-    seventeen = 0b1111111011111110111111101111111011111110111111101111111011111110
+	var ten BitMap
+	ten = 0b1111110011111100111111001111110011111100111111001111110011111100
 
-    var ten BitMap 
-    ten = 0b1111110011111100111111001111110011111100111111001111110011111100
+	var fiveteen BitMap
+	fiveteen = 0b0111111101111111011111110111111101111111011111110111111101111111
 
-    var fiveteen BitMap 
-    fiveteen = 0b0111111101111111011111110111111101111111011111110111111101111111
-
-    var six BitMap 
-    six = 0b0011111100111111001111110011111100111111001111110011111100111111
-
+	var six BitMap
+	six = 0b0011111100111111001111110011111100111111001111110011111100111111
 
 	for {
 		var jumps BitMap
 
-		jumps |= ((i << 17) & seventeen) 
+		jumps |= ((i << 17) & seventeen)
 		jumps |= (i << 10 & ten)
 		jumps |= ((i << 15) & fiveteen)
 		jumps |= ((i << 6) & six)
 
 		jumps |= ((i >> 6) & ten)
-        jumps |= ((i >> 10) & six)
-        jumps |= ((i >> 15) & seventeen)
-        jumps |= ((i >> 17) & fiveteen)
+		jumps |= ((i >> 10) & six)
+		jumps |= ((i >> 15) & seventeen)
+		jumps |= ((i >> 17) & fiveteen)
 
-		fmt.Printf("%v\n", jumps.String())
 		if i == BitMap(MAX_POSITION) {
 			break
 		}
-		knightJumps[position] = i
+		knightJumps[position] = jumps
 		i = i << 1
 		position += 1
 	}
@@ -127,7 +123,7 @@ func FromFenString(input string) *ChessBoard {
 	}
 	result := ChessBoard{}
 
-	var currentPoint uint64
+	var currentPoint BitMap
 	currentPoint = 1 << 63
 	for i := 0; i < len(input); i++ {
 
@@ -174,15 +170,15 @@ func FromFenString(input string) *ChessBoard {
 	return &result
 }
 
-func (receiver *ChessBoard) white() uint64 {
+func (receiver *ChessBoard) white() BitMap {
 	return receiver.whitePawns | receiver.whiteRooks | receiver.whiteKnights | receiver.whiteBishop | receiver.whiteQueen | receiver.whiteKing
 }
 
-func (receiver *ChessBoard) black() uint64 {
+func (receiver *ChessBoard) black() BitMap {
 	return receiver.blackPawns | receiver.blackRooks | receiver.blackKnights | receiver.blackBishop | receiver.blackQueen | receiver.blackKing
 }
 
-func (receiver *ChessBoard) all() uint64 {
+func (receiver *ChessBoard) all() BitMap {
 	return receiver.white() | receiver.black()
 }
 
@@ -192,7 +188,7 @@ func (receiver *ChessBoard) String() string {
 
 	builder := strings.Builder{}
 
-	var current uint64
+	var current BitMap
 	current = 1 << 63
 	for y := 0; y < 8; y++ {
 
@@ -253,21 +249,49 @@ func (receiver *ChessBoard) String() string {
 	return builder.String()
 }
 
-func (receiver *ChessBoard) GetMoves() []Move {
+func findLSBSetBit(num BitMap) uint8 {
+	var bitIndex uint8
+	bitIndex = 0
+	for num > 0 {
+		if num&1 == 1 {
+			return bitIndex
+		}
+		num >>= 1
+		bitIndex++
+	}
+	return 0 // If no bit is set
+}
+
+func (receiver ChessBoard) GetMoves() []Move {
 
 	result := []Move{}
 
 	pawn_at_starting_pos := receiver.whitePawns & WHITE_PAWN_START_POSITION
 	if pawn_at_starting_pos > 0 {
-		amount := bits.OnesCount64(pawn_at_starting_pos)
+		amount := bits.OnesCount64(uint64(pawn_at_starting_pos))
 		for i := 0; i < amount; i++ {
 			result = append(result, Move{})
 		}
 	}
 
-	amount := bits.OnesCount64(receiver.whitePawns)
+	amount := bits.OnesCount64(uint64(receiver.whitePawns))
 	for i := 0; i < amount; i++ {
 		result = append(result, Move{})
+	}
+
+	knights := receiver.whiteKnights
+	for {
+		var current uint8
+		current = findLSBSetBit(knights)
+		if current == 0 {
+			break
+		}
+		jumps := knightJumps[current] ^ receiver.white()
+		amount := bits.OnesCount64(uint64(jumps))
+		for i := 0; i < amount; i++ {
+			result = append(result, Move{})
+		}
+		knights = knights ^ 1<<current
 	}
 
 	return result
